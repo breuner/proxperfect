@@ -1,0 +1,26 @@
+# Proxperfect main executable from local source code on Alpine Linux for minimum image size.
+#
+# Run docker build from proxperfect repository root dir like this:
+# docker build -t proxperfect-local -f build_helpers/docker/Dockerfile.alpine.local .
+
+FROM alpine:3 as builder
+
+RUN apk add bash go make
+
+COPY ./ /root/proxperfect
+
+RUN cd /root/proxperfect && \
+    go mod download && \
+    make clean && \
+    make
+
+FROM alpine:3
+
+COPY --from=builder /root/proxperfect/proxperfect /usr/local/bin/
+
+RUN apk add bash && \
+    ln -s /usr/local/bin/proxperfect /usr/bin/proxperfect && \
+    /usr/local/bin/proxperfect --version
+
+ENTRYPOINT ["/usr/local/bin/proxperfect"]
+
